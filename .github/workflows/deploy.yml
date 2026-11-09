@@ -8,13 +8,17 @@ on:
   push:
     branches: [main]
     paths:
-      - "api/**"
-      - "web/**"
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/deploy.yml"
   pull_request:
     paths:
-      - "api/**"
-      - "web/**"
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -39,22 +43,11 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            api/package-lock.json
-            web/package-lock.json
 
-      - name: API checks
-        working-directory: api
-        run: |
-          npm ci
-          npm run typecheck
-          npm test
-
-      - name: Web app typecheck and build
-        working-directory: web
-        run: |
-          npm ci
-          npm run build
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
 
   e2e:
     name: End-to-end against local Pages
@@ -66,25 +59,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            api/package-lock.json
-            web/package-lock.json
 
-      - name: Build the web app
-        working-directory: web
-        run: |
-          npm ci
-          npm run build
+      - run: npm ci
+      - run: npm run build
 
-      - name: Install and prepare local D1
-        working-directory: api
+      - name: Prepare local D1
+        working-directory: apps/api
         run: |
-          npm ci
           printf 'BETTER_AUTH_SECRET=%s\nCRON_SECRET=%s\nADMIN_DEV_EMAIL=staff@example.com\n' "$(openssl rand -base64 32)" "$(openssl rand -hex 24)" > .dev.vars
           npm run db:migrate:local
 
       - name: Start Pages locally
-        working-directory: api
+        working-directory: apps/api
         run: |
           npx wrangler pages dev ../web/dist --port 8788 \
             --binding APP_URL=http://localhost:8788 --binding BETTER_AUTH_URL=http://localhost:8788 > pages.log 2>&1 &
@@ -95,12 +81,11 @@ jobs:
           echo "Pages dev didn't start"; cat pages.log; exit 1
 
       - name: Run end-to-end checks
-        working-directory: api
-        run: python3 test/e2e_local.py
+        run: npm run e2e
 
       - name: Pages log (on failure)
         if: failure()
-        working-directory: api
+        working-directory: apps/api
         run: cat pages.log
 
   deploy:
@@ -122,9 +107,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            api/package-lock.json
-            web/package-lock.json
 
       - name: Check required settings
         env:
@@ -137,37 +119,25 @@ jobs:
           done
           if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing (see docs/DEPLOY.md)"; exit 1; fi
 
-      - name: Build the web app
-        working-directory: web
-        run: |
-          npm ci
-          npm run build
-
-      - name: Install API
-        working-directory: api
-        run: npm ci
+      - run: npm ci
+      - run: npm run build
 
       - name: Check production config
-        working-directory: api
-        run: node scripts/check-prod-config.mjs
+        run: npm run check:prod -w @yir/api
 
       # Migrations run before the new code goes live, so they must be additive (see docs/DEPLOY.md).
       - name: Apply D1 migrations
-        working-directory: api
+        working-directory: apps/api
         run: npx wrangler d1 migrations apply yir --remote
 
-      - name: Create the Pages project (first deploy only)
-        working-directory: api
-        run: |
-          if npx wrangler pages project list 2>/dev/null | grep -qw "$PAGES_PROJECT"; then
-            echo "Pages project $PAGES_PROJECT exists."
-          else
-            npx wrangler pages project create "$PAGES_PROJECT" --production-branch main
-          fi
+      # Pages keeps the project and its custom domain outside wrangler.jsonc, so this creates whatever is missing:
+      # the project, the custom domain from SITE_URL, and its DNS record. Does nothing once they exist.
+      - name: Make sure the Pages project and domain exist
+        run: node apps/api/scripts/ensure-pages.mjs
 
       # Secrets go in before the code, so the new Functions never start without them.
       - name: Sync secrets to Pages
-        working-directory: api
+        working-directory: apps/api
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
@@ -184,12 +154,13 @@ jobs:
           rm -f secrets.json
 
       - name: Deploy web app and Functions
-        working-directory: api
+        working-directory: apps/api
         run: npx wrangler pages deploy ../web/dist --project-name "$PAGES_PROJECT" --branch main --commit-hash "$GITHUB_SHA" --commit-dirty=true
 
       - name: Smoke test
         run: |
-          for i in $(seq 1 12); do
+          # up to 5 minutes, because on the first deploy the custom domain's certificate is still being issued
+          for i in $(seq 1 30); do
             if curl -sf "$SITE_URL/api/health" | grep -q '"env":"production"'; then
               curl -sf -o /dev/null "$SITE_URL/" && echo "API and web app are up." && exit 0
             fi

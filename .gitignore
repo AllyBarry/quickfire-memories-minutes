@@ -1,2 +1,16 @@
+# dependencies
 node_modules/
+
+# build output and tool caches
+dist/
+dist-single/
+*.tsbuildinfo
+.vite/
+
+# Cloudflare local state and secrets
+.wrangler/
+.dev.vars
+secrets.json
+pages.log
+
 .DS_Store

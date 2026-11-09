@@ -1,0 +1,47 @@
+{
+  // Years in Rotation on Cloudflare Pages: the built web app (../web/dist) plus Pages Functions
+  // in ./functions for /api/* and /go/*. One domain, so sign-in cookies are first-party.
+  // Top level = local development (`wrangler pages dev`). env.production = the live site.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "years-in-rotation",
+  "pages_build_output_dir": "../web/dist",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The same database in both blocks. `npx wrangler d1 create yir` prints the id; it isn't a secret.
+  // Local development ignores the id and uses a local SQLite file.
+  "d1_databases": [{ "binding": "DB", "database_name": "yir", "database_id": "2349a022-c10e-4b67-94be-1384c82c2aed", "migrations_dir": "migrations" }],
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "yir-photos" }],
+
+  "vars": {
+    "ENVIRONMENT": "development",
+    "APP_URL": "http://localhost:5173",
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    "EMAIL_MODE": "log",
+    "EMAIL_FROM": "Years in Rotation <hello@qfm.co.za>",
+    "STAFF_EMAIL": "staff@example.com",
+    "CHECKOUT_ENABLED": "false",
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": ""
+  },
+
+  "env": {
+    "production": {
+      // Values marked REPLACE and the zero database id must be filled in before the first deploy.
+      // scripts/check-prod-config.mjs stops the GitHub deploy if any are left.
+      "d1_databases": [{ "binding": "DB", "database_name": "yir", "database_id": "2349a022-c10e-4b67-94be-1384c82c2aed", "migrations_dir": "migrations" }],
+      "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "yir-photos" }],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "APP_URL": "https://minutes.qfm.co.za",
+        "BETTER_AUTH_URL": "https://minutes.qfm.co.za",
+        "EMAIL_MODE": "resend",
+        "EMAIL_FROM": "Years in Rotation <hello@qfm.co.za>",
+        "STAFF_EMAIL": "hello@qfm.co.za",
+        "CHECKOUT_ENABLED": "false",
+        "ACCESS_TEAM_DOMAIN": "allyb.cloudflareaccess.com",
+        "ACCESS_AUD": "19154c62bf97ac265fcb11b94dc8c292b174199a078fdeb545bb68d2ae3fd191"
+      }
+    }
+  }
+}

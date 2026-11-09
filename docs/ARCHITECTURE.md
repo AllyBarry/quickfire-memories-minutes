@@ -6,7 +6,7 @@ One Cloudflare Pages project serves everything on one domain. Deployment: [DEPLO
                          minutes.qfm.co.za (Cloudflare Pages)
    ┌──────────────────────────────────────────────────────────┐
    │  /, /start, /<slug>, /organiser, /admin ...              │
-   │      static web app (React, web/dist)                    │
+   │      static web app (React, apps/web)                    │
    │  /api/*   Pages Function: the API (Hono)                 │──► D1 "yir": organisers, tapes, tracks,
    │  /go/*    Pages Function: QR redirects                   │          payments, requests, audit, auth
    │  /admin and /api/admin/* behind Cloudflare Access        │──► R2 "yir-photos": friends' photos (private)
@@ -98,8 +98,9 @@ Each job is safe to run twice.
 
 ## What's built and verified
 
-- `api/`: typechecks. 20 unit tests cover deadlines in SAST, ids, tokens and slugs, validation, QR destinations and Paystack signatures.
-  60 end-to-end checks run against `wrangler pages dev` with local D1 and R2 and real Better Auth ([api/test/e2e_local.py](../api/test/e2e_local.py)).
-- `web/`: typechecks and builds. The whole flow was clicked through in a browser against the local stack:
+- `packages/shared`: 11 unit tests cover the deadlines in South African time (including browsers in other time zones), the print run and the timeline.
+- `apps/api`: typechecks. 13 unit tests cover open and closed tapes, ids, tokens and slugs, validation, QR destinations and Paystack signatures.
+  60 end-to-end checks run against `wrangler pages dev` with local D1 and R2 and real Better Auth ([apps/api/test/e2e_local.py](../apps/api/test/e2e_local.py)).
+- `apps/web`: typechecks and builds. The whole flow was clicked through in a browser against the local stack:
   a friend picks a song, the organiser signs in from the emailed link and approves it, the share link turns into the tape, and the admin shows it.
 - Not yet run against real Cloudflare, Resend or Paystack accounts. That needs the one-time setup in [DEPLOY.md](DEPLOY.md).

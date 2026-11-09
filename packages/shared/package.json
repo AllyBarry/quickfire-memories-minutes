@@ -1,0 +1,14 @@
+{
+  "name": "@yir/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Rules the web app and the API must agree on: plans and prices, inks, field limits, deadlines in South African time.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

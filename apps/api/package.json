@@ -1,0 +1,26 @@
+{
+  "name": "@yir/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev ../web/dist --port 8788",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "python3 test/e2e_local.py",
+    "db:migrate:local": "wrangler d1 migrations apply yir --local",
+    "db:migrate:remote": "wrangler d1 migrations apply yir --remote",
+    "check:prod": "node scripts/check-prod-config.mjs",
+    "functions:build": "wrangler pages functions build --outdir .wrangler/functions-build"
+  },
+  "dependencies": {
+    "@yir/shared": "*",
+    "better-auth": "1.7.18",
+    "hono": "4.13.17",
+    "jose": "6.2.16"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261109.1",
+    "wrangler": "4.158.0"
+  }
+}

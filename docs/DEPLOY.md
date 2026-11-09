@@ -2,8 +2,9 @@
 
 The site runs on **Cloudflare Pages**, on `minutes.qfm.co.za`, next to Quickfire Memories on `seconds.qfm.co.za` in the same Cloudflare account:
 
-- **Everything a visitor sees** is the built web app ([web/](../web)), served as static files.
-- **`/api/*` and `/go/*`** are Pages Functions ([api/functions](../api/functions)), running the API in [api/src](../api/src).
+- **Everything a visitor sees** is the built web app ([apps/web](../apps/web)), served as static files.
+- **`/api/*` and `/go/*`** are Pages Functions ([apps/api/functions](../apps/api/functions)), running the API in [apps/api/src](../apps/api/src).
+- **Rules both share** (plans, inks, limits, deadlines) are in [packages/shared](../packages/shared).
 
 Because both are on one domain, sign-in cookies are first-party and there's no CORS to manage.
 
@@ -11,7 +12,7 @@ GitHub Actions does the work:
 
 | Workflow | When | What runs |
 | --- | --- | --- |
-| [deploy.yml](../.github/workflows/deploy.yml) | Pull request touching `api/` or `web/` | Typecheck, unit tests, web build, and 60 end-to-end checks against a local Pages server |
+| [deploy.yml](../.github/workflows/deploy.yml) | Pull request touching `apps/`, `packages/` or the root package files | Typecheck, unit tests, web build, and 60 end-to-end checks against a local Pages server |
 | [deploy.yml](../.github/workflows/deploy.yml) | Push to `main`, or **Run workflow** | The same checks, then config check, D1 migrations, secret sync, deploy and a smoke test |
 | [daily.yml](../.github/workflows/daily.yml) | Every day at 08:00 SAST, or **Run workflow** | Calls `/api/cron`: auto-close, "two days left" reminders, 5-year clean-up |
 
@@ -21,14 +22,14 @@ The daily job runs from GitHub because Cloudflare Pages has no cron triggers.
 
 ## One-time setup
 
-Steps 1 to 5 are in Cloudflare and Resend, step 6 is in GitHub. Wrangler commands run from `api/` after `npm install` and `npx wrangler login`.
+Steps 1 to 5 are in Cloudflare and Resend, step 6 is in GitHub. Run `npm install` at the root once, then run wrangler commands from `apps/api/` after `npx wrangler login`.
 
 ### 1. Domain
 
 `qfm.co.za` is already on Cloudflare for Quickfire Memories, so there's nothing to do here. The site lives on its own subdomain,
 so it doesn't touch Quickfire's Worker on `seconds.qfm.co.za`.
 To move it to a different domain, change `APP_URL`, `BETTER_AUTH_URL` and `EMAIL_FROM` in `env.production.vars` in
-[api/wrangler.jsonc](../api/wrangler.jsonc), and set the GitHub variable `SITE_URL` (step 6).
+[apps/api/wrangler.jsonc](../apps/api/wrangler.jsonc), and set the GitHub variable `SITE_URL` (step 6).
 
 ### 2. Database and photo storage
 
@@ -37,19 +38,22 @@ npx wrangler d1 create yir                  # copy the database_id it prints
 npx wrangler r2 bucket create yir-photos
 ```
 
-Put the `database_id` in `api/wrangler.jsonc` in **both** places (top level and `env.production`) and commit it. It isn't a secret.
+Put the `database_id` in `apps/api/wrangler.jsonc` in **both** places (top level and `env.production`) and commit it. It isn't a secret.
 The deploy refuses to run while the placeholder id or any `REPLACE` value is left (`node scripts/check-prod-config.mjs` checks this).
 
 New tape requests are emailed to `STAFF_EMAIL` (`hello@qfm.co.za`, the same inbox Quickfire uses). Change it in `env.production.vars` if you want them elsewhere.
 
 ### 3. The Pages project and custom domain
 
-The first deploy creates the Pages project `years-in-rotation` (production branch `main`). Once it exists:
+Nothing to do by hand. Quickfire is a Worker, so `wrangler deploy` attaches `seconds.qfm.co.za` from the `routes` in its config.
+Pages has no equivalent in `wrangler.jsonc`, so every deploy runs [apps/api/scripts/ensure-pages.mjs](../apps/api/scripts/ensure-pages.mjs) first. It creates whatever is missing:
 
-1. In the dashboard, open **Workers & Pages**, then **years-in-rotation**, then **Custom domains**.
-2. Add `minutes.qfm.co.za`. Because `qfm.co.za` is in the same account, Cloudflare creates the CNAME record itself.
+1. the Pages project `years-in-rotation` (production branch `main`)
+2. the custom domain from `SITE_URL` (`minutes.qfm.co.za`) on that project
+3. a proxied CNAME from `minutes.qfm.co.za` to the project's `pages.dev` address, in the `qfm.co.za` zone
 
-Until the domain is attached, the site is at `https://years-in-rotation.pages.dev`. Sign-in links use `APP_URL`, so attach the domain before inviting organisers.
+Once they exist it changes nothing. If `minutes.qfm.co.za` already has a DNS record pointing elsewhere, the deploy stops rather than overwrite it.
+On the first deploy Cloudflare takes a few minutes to issue the domain's certificate. The smoke test waits up to 5 minutes for it.
 
 ### 4. Staff access (admin)
 
@@ -76,7 +80,8 @@ Production sends from `Years in Rotation <hello@qfm.co.za>`. Change `EMAIL_FROM`
 
 - **Account, Cloudflare Pages, Edit**
 - **Account, D1, Edit**
-- limit **Account Resources** to your account
+- **Zone, Zone, Read** and **Zone, DNS, Edit** (for the custom domain's DNS record)
+- limit **Account Resources** to your account and **Zone Resources** to `qfm.co.za`
 
 In the GitHub repo, under **Settings, then Secrets and variables, then Actions**:
 
@@ -91,7 +96,7 @@ In the GitHub repo, under **Settings, then Secrets and variables, then Actions**
 
 | Variable | Required | Value |
 | --- | --- | --- |
-| `SITE_URL` | if not minutes.qfm.co.za | e.g. `https://years-in-rotation.pages.dev` before the domain is attached |
+| `SITE_URL` | only to move the site | The live address. Defaults to `https://minutes.qfm.co.za`. The deploy attaches this domain. |
 
 Every deploy pushes these secrets to the Pages project before the new code goes live.
 
@@ -101,21 +106,20 @@ Every deploy pushes these secrets to the Pages project before the new code goes 
 
 ## First deploy
 
-1. Commit the filled-in `api/wrangler.jsonc` and push to `main`, or open **Actions, then Deploy (Cloudflare Pages), then Run workflow**.
+1. Commit the filled-in `apps/api/wrangler.jsonc` and push to `main`, or open **Actions, then Deploy (Cloudflare Pages), then Run workflow**.
 2. The deploy job:
    1. checks secrets and config
    2. applies the D1 migrations (`0001_auth.sql`, `0002_app.sql`)
-   3. creates the Pages project the first time
+   3. creates the Pages project, custom domain and DNS record the first time
    4. syncs secrets
    5. deploys the web app and Functions
    6. checks `$SITE_URL/api/health` and the home page
-3. Attach the custom domain (step 3) if this was the first run.
-4. **Test it end to end:**
+3. **Test it end to end:**
    - Open `/admin` (through Access), then **Add organiser**, using your own email and a party date six weeks out.
    - Click the emailed link. Your dashboard opens.
    - Open the share link in a private window, pick a song, then approve it in **Set the running order**.
    - Open the share link again: it's now the tape. Scan a QR code from the preview to check `/go/<id>`.
-5. Open **Actions, then Daily jobs, then Run workflow** once and check it reports `{"autoClose":0,...}`.
+4. Open **Actions, then Daily jobs, then Run workflow** once and check it reports `{"autoClose":0,...}`.
 
 ---
 
@@ -144,13 +148,15 @@ Until then, `/start` sends a "reserve a tape" request, staff agree payment (EFT 
 
 ## Running it locally
 
+From the repo root:
+
 ```bash
-cd web && npm install && npm run build && cd ../api
-npm install
-cp .dev.vars.example .dev.vars          # fill in BETTER_AUTH_SECRET and CRON_SECRET
-npm run db:migrate:local
-npm run dev                             # Pages + Functions on http://localhost:8788
-cd ../web && npm run dev                # http://localhost:5173, with /api and /go proxied to 8788
+nvm use && npm install
+npm run build                                       # the local Pages server serves apps/web/dist
+cp apps/api/.dev.vars.example apps/api/.dev.vars    # fill in BETTER_AUTH_SECRET and CRON_SECRET
+npm run db:migrate:local -w @yir/api
+npm run dev:api                                     # Pages + Functions on http://localhost:8788
+npm run dev:web                                     # second terminal: http://localhost:5173, /api and /go proxied to 8788
 ```
 
 - **Emails aren't sent locally.** Read them at `http://localhost:5173/api/dev/emails`. That's where the sign-in links are.

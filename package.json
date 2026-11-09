@@ -1,0 +1,27 @@
+{
+  "name": "years-in-rotation",
+  "private": true,
+  "type": "module",
+  "description": "Years in Rotation: a mixtape of friends' songs and liner notes, as a web page and a printed box.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev:web": "npm run dev -w @yir/web",
+    "dev:api": "npm run dev -w @yir/api",
+    "build": "npm run build -w @yir/web",
+    "build:demo": "npm run build:single -w @yir/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "e2e": "npm run e2e -w @yir/api",
+    "deploy:check": "npm run build && npm run check:prod -w @yir/api && npm run functions:build -w @yir/api"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}

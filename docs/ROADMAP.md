@@ -13,7 +13,7 @@ What the product needs next. The web app, API, deploy pipeline and daily jobs ar
 
 1. Generate print-ready PDFs when a boxed tape is approved: cards 9 up on A4 with crop marks and bleed, and the J-card with fold marks. Cloudflare Browser Rendering can print the existing card components.
 2. Add a "download print files" button to the admin's print queue (the "Print queue" filter on the Tapes tab).
-3. Get a proof of all four ink pairs from the printer and adjust `web/src/data/inks.ts` to match.
+3. Get a proof of all four ink pairs from the printer and adjust `packages/shared/src/inks.ts` to match.
 4. Choose the box supplier and confirm how many cards a standard box holds. The Double album box holds twice as many.
 5. Ask for the delivery address after approval, and add courier tracking to the "shipped" stage.
 
