@@ -18,7 +18,7 @@ npm run build:single   # dist-single/index.html, one self-contained file (the de
 | Path | Who | Page |
 | --- | --- | --- |
 | `/` | Buyers | Sales page: hero, how it works, playable sample tape, printed pieces, ink picker and pricing, FAQ |
-| `/start` | Buyers | Checkout: who it's for (with birth year), plan and inks, details, then Paystack, or a "reserve a tape" request while checkout is off |
+| `/start` | Buyers | Checkout: who it's for (with birth year), party date and plan together (with a one-click switch to Digital when the date is too soon to print), inks, details, then Paystack, or a "reserve a tape" request while checkout is off |
 | `/<slug>` | Friends, then guests | The share link: the song-pick form while open, then the finished tape once approved |
 | `/<slug>/edit/<id>#<token>` | One friend | Change or delete their own song |
 | `/organiser` | Organisers | Magic-link sign-in, then their tapes |

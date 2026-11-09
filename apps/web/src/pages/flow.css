@@ -358,6 +358,24 @@
   cursor: not-allowed;
 }
 
+/* "too soon to print" notice under the plans, with a one-click switch to Digital */
+.plan-switch {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  margin: 4px 0 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--pop);
+  background: color-mix(in srgb, var(--pop) 8%, transparent);
+}
+.plan-switch p {
+  margin: 0;
+}
+.plan-switch.has-error p {
+  color: var(--pop-text, var(--text));
+  font-weight: 600;
+}
+
 /* order summary */
 .summary {
   grid-template-columns: 120px 1fr;

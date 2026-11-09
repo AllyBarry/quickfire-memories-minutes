@@ -11,7 +11,7 @@ import { useInk } from "../lib/InkContext";
 import { SHOW_DEMO } from "../lib/flags";
 import "./flow.css";
 
-const STEPS = ["Who it's for", "Plan and inks", "Your details", "Pay"] as const;
+const STEPS = ["Who it's for", "Date and plan", "Your details", "Pay"] as const;
 const OCCASIONS = ["turns 30", "turns 40", "turns 50", "turns 60", "is getting married", "is retiring", "is moving away"];
 const THIS_YEAR = new Date().getFullYear();
 
@@ -48,6 +48,8 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
   const [payError, setPayError] = useState("");
   const plan = planById(order.planId);
   const printed = plan.printed;
+  /** The party is too soon for any printed plan (the radios for Boxed and Double album are disabled). */
+  const printTooSoon = !!order.partyDate && order.partyDate < minPartyDate(true);
 
   useEffect(() => {
     if (!live) return;
@@ -67,11 +69,12 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
     if (step === 0) {
       if (!order.honoree.trim()) e.honoree = "Add the name that goes on the tape.";
       if (!order.bornYear || order.bornYear < 1910 || order.bornYear > THIS_YEAR) e.bornYear = `Add a year between 1910 and ${THIS_YEAR}.`;
-      if (!order.partyDate) e.partyDate = "Pick the party date.";
-      else if (printed && order.partyDate < minPartyDate(true)) e.partyDate = "Too soon for a printed box. Choose Digital, or a date at least three weeks away.";
-      else if (order.partyDate < minPartyDate(false)) e.partyDate = "Pick a date at least five days away so friends have time to choose.";
     }
-    if (step === 1 && printed && order.partyDate < minPartyDate(true)) e.plan = "A printed box can't arrive before this party date. Choose Digital or change the date.";
+    if (step === 1) {
+      if (!order.partyDate) e.partyDate = "Pick the party date.";
+      else if (order.partyDate < minPartyDate(false)) e.partyDate = "Pick a date at least five days away so friends have time to choose.";
+      else if (printed && printTooSoon) e.plan = "A printed box can't arrive before this party date. Switch to Digital, or pick a date at least three weeks away.";
+    }
     if (step === 2) {
       if (!order.organiserName.trim()) e.organiserName = "Add your name.";
       if (!/^\S+@\S+\.\S+$/.test(order.organiserEmail)) e.organiserEmail = "Add an email address we can send the link to.";
@@ -96,7 +99,7 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
 
   const showServerError = (err: unknown) => {
     if (err instanceof ApiError && err.field) {
-      const stepOf: Record<string, number> = { honoree: 0, bornYear: 0, partyDate: 0, occasion: 0, invited: 0, planId: 1, name: 2, email: 2 };
+      const stepOf: Record<string, number> = { honoree: 0, bornYear: 0, partyDate: 1, occasion: 0, invited: 0, planId: 1, name: 2, email: 2 };
       const field = err.field === "name" ? "organiserName" : err.field === "email" ? "organiserEmail" : err.field;
       setErrors({ [field]: err.message });
       setStep(stepOf[err.field] ?? step);
@@ -259,7 +262,6 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                 onChange={(e) => set({ bornYear: Number(e.target.value) || 0 })}
                 error={errors.bornYear}
               />
-              <Field id="partyDate" type="date" label="Party date" hint="We work the deadlines back from this date." value={order.partyDate} min={minPartyDate(false)} onChange={(e) => set({ partyDate: e.target.value })} error={errors.partyDate} />
               <div className="field">
                 <label htmlFor="invited">Roughly how many friends will you invite?</label>
                 <p className="field__hint" id="invited-hint">
@@ -272,10 +274,24 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
 
           {step === 1 && (
             <>
+              <h2>When's the party?</h2>
+              <Field
+                id="partyDate"
+                type="date"
+                label="Party date"
+                hint="We work the deadlines back from this date. Printed boxes need three weeks, Digital needs five days."
+                value={order.partyDate}
+                min={minPartyDate(false)}
+                onChange={(e) => {
+                  set({ partyDate: e.target.value });
+                  setErrors(({ partyDate: _d, plan: _p, ...rest }) => rest);
+                }}
+                error={errors.partyDate}
+              />
               <h2>Choose a plan</h2>
               <div className="opts" role="radiogroup" aria-label="Plan">
                 {plans.map((p) => {
-                  const tooSoon = p.printed && !!order.partyDate && order.partyDate < minPartyDate(true);
+                  const tooSoon = p.printed && printTooSoon;
                   return (
                     <label key={p.id} className="opt" aria-disabled={tooSoon}>
                       <input type="radio" name="plan" value={p.id} checked={order.planId === p.id} disabled={tooSoon} onChange={() => set({ planId: p.id })} />
@@ -286,7 +302,22 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                   );
                 })}
               </div>
-              {errors.plan && <p className="field__err">{errors.plan}</p>}
+              {printed && printTooSoon && (
+                <div className={`plan-switch ${errors.plan ? "has-error" : ""}`} role={errors.plan ? "alert" : "status"}>
+                  <p>
+                    {errors.plan ?? `A printed box can't arrive in time for this party date. Switch to Digital, or pick a date from ${fmtDate(atNoon(minPartyDate(true)))}.`}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      set({ planId: "digital" });
+                      setErrors(({ plan: _p, ...rest }) => rest);
+                    }}
+                  >
+                    Switch to Digital ({formatZar(planById("digital").priceZar)})
+                  </Button>
+                </div>
+              )}
               <InkPicker label="Tape inks" />
             </>
           )}
