@@ -1,0 +1,73 @@
+.cassette {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+.cassette__shell {
+  fill: var(--tape-shell);
+}
+.cassette__label {
+  fill: var(--tape-label);
+}
+.cassette__stripe {
+  fill: var(--pop);
+}
+.cassette__screw {
+  fill: var(--tape-window);
+  opacity: 0.6;
+}
+.cassette__window {
+  fill: var(--tape-window);
+  stroke: var(--tape-label-ink);
+  stroke-width: 1.5;
+}
+.cassette__wound {
+  fill: var(--text-muted);
+  opacity: 0.5;
+  transition: r 0.9s ease;
+}
+.cassette__hub {
+  fill: var(--tape-label);
+  stroke: var(--tape-label-ink);
+  stroke-width: 2;
+}
+.cassette__spoke {
+  stroke: var(--tape-label-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.cassette__hand {
+  font: 400 30px var(--font-hand);
+  fill: var(--tape-label-ink);
+}
+.cassette__side {
+  font: 800 22px var(--font-display);
+  fill: var(--pop);
+}
+.cassette__counter {
+  font: 600 13px var(--font-mono);
+  fill: var(--tape-label-ink);
+  opacity: 0.7;
+  letter-spacing: 0.08em;
+}
+.cassette__reel {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cassette.is-spinning .cassette__reel {
+  animation: cassette-spin 0.5s linear infinite;
+}
+@keyframes cassette-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cassette.is-spinning .cassette__reel {
+    animation: none;
+  }
+  .cassette__wound {
+    transition: none;
+  }
+}

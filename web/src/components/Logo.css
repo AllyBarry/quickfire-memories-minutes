@@ -1,0 +1,14 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.logo__mark {
+  flex: none;
+}
+.logo__word {
+  font: 900 13px/0.95 var(--font-display);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}

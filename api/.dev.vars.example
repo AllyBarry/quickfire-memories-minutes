@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local development.
+# openssl rand -base64 32
+BETTER_AUTH_SECRET=
+# Bearer token the daily GitHub Actions job sends to /api/cron. Any long random string locally.
+CRON_SECRET=
+# Treat local admin requests as this staff email (development only; production uses Cloudflare Access)
+ADMIN_DEV_EMAIL=staff@example.com
+# Optional locally:
+# RESEND_API_KEY=
+# PAYSTACK_SECRET_KEY=

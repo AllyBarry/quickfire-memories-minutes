@@ -1,0 +1,141 @@
+.player {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .player {
+    grid-template-columns: 1fr;
+  }
+}
+.player--empty {
+  grid-template-columns: 1fr;
+  max-width: 520px;
+  gap: 16px;
+  color: var(--text-muted);
+}
+.player__deck {
+  background: var(--bg-raised);
+  border: var(--border);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.player__deck .cassette {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.player__sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 18px 22px;
+}
+.player__side h3 {
+  margin-bottom: 6px;
+  color: var(--pop-text);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+.player__side h3 small {
+  font: 400 11px var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.player__side ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--border);
+}
+.player__track {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-align: left;
+  padding: 10px 4px;
+  cursor: pointer;
+  font: inherit;
+}
+.player__track:hover {
+  background: color-mix(in srgb, var(--pop) 9%, transparent);
+}
+.player__no,
+.player__yrs {
+  font: 600 12px var(--font-mono);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.player__what {
+  min-width: 0;
+}
+.player__song {
+  display: block;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.player__who {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.player__track[aria-pressed="true"] .player__no,
+.player__track[aria-pressed="true"] .player__yrs {
+  color: var(--pop-text);
+}
+.player__track[aria-pressed="true"] .player__song {
+  text-decoration: underline wavy var(--pop) 1.5px;
+  text-underline-offset: 4px;
+}
+.player__transport {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.player__transport .btn {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+.player__hint {
+  margin-left: auto;
+  font: 400 11px var(--font-mono);
+  color: var(--text-muted);
+}
+@media (min-width: 881px) {
+  .player__liner {
+    position: sticky;
+    top: 88px;
+  }
+}
+.player__swap {
+  animation: player-swap 0.45s ease;
+}
+@keyframes player-swap {
+  from {
+    transform: translateY(6px);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player__swap {
+    animation: none;
+  }
+}

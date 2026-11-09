@@ -1,0 +1,63 @@
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.field__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.field label {
+  font-weight: 700;
+  font-size: 15px;
+}
+.field__count {
+  font: 400 12px var(--font-mono);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.field__count.is-near {
+  color: var(--pop-text);
+  font-weight: 600;
+}
+.field__hint {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+}
+.field input[type="file"] {
+  padding: 9px;
+  font-size: 15px;
+}
+.field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: 2.5px solid var(--focus);
+  outline-offset: 1px;
+}
+.field.has-error input,
+.field.has-error textarea {
+  border-color: var(--pop-text);
+  box-shadow: 3px 3px 0 var(--pop);
+}
+.field__err {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pop-text);
+}

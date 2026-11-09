@@ -1,0 +1,39 @@
+.section {
+  padding-block: clamp(64px, 10vw, 112px);
+  position: relative;
+  border-top: var(--border);
+}
+.section--sunk {
+  background: var(--bg-sunk);
+}
+/* an ink-filled band: swap the text tokens so everything inside reads on ink */
+.section--ink {
+  background: var(--text);
+  color: var(--on-ink);
+  --text-muted: color-mix(in srgb, var(--on-ink) 75%, transparent);
+  --line: color-mix(in srgb, var(--on-ink) 25%, transparent);
+  /* keep a cassette visible against the ink band */
+  --tape-shell: color-mix(in srgb, var(--on-ink) 22%, var(--text));
+  --tape-window: var(--text);
+}
+.section__head {
+  max-width: 760px;
+  margin-bottom: clamp(32px, 5vw, 52px);
+}
+.section__eyebrow {
+  color: var(--pop-text);
+  margin-bottom: 14px;
+}
+.section--ink .section__eyebrow {
+  color: var(--pop);
+}
+.section__head h2 {
+  font-size: clamp(30px, 5vw, 54px);
+  font-weight: 800;
+}
+.section__intro {
+  margin-top: 18px;
+  font-size: 19px;
+  color: var(--text-muted);
+  max-width: 62ch;
+}

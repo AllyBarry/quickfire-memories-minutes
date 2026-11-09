@@ -1,0 +1,93 @@
+/*
+ * Years in Rotation design tokens. Components read only these variables.
+ * Layout idea: a cassette J-card. Two riso-style inks on cool paper, square edges,
+ * mono labels, and the pop ink used as a slightly off-register second colour.
+ * InkProvider overrides the --pal-* values with the buyer's chosen inks.
+ */
+:root {
+  /* chosen inks (defaults: "Night & neon") */
+  --pal-ink: #1d2a73;
+  --pal-pop: #ff3fa4;
+  --pal-pop-text: #c8107a;
+  --pal-paper: #e6e9ee;
+  --pal-card: #f4f6f9;
+  --pal-ink-dark: #dfe4ff;
+  --pal-pop-dark: #ff68ba;
+  --pal-pop-text-dark: #ff8fcb;
+  --pal-paper-dark: #10132a;
+  --pal-card-dark: #181c3a;
+
+  /* surfaces and text (light) */
+  --bg: var(--pal-paper);
+  --bg-raised: var(--pal-card);
+  --bg-sunk: color-mix(in srgb, var(--pal-ink) 7%, var(--pal-paper));
+  --text: var(--pal-ink);
+  --text-muted: color-mix(in srgb, var(--pal-ink) 72%, var(--pal-paper));
+  --line: color-mix(in srgb, var(--pal-ink) 24%, transparent);
+  --pop: var(--pal-pop);
+  --pop-text: var(--pal-pop-text);
+  /* text on a pop-filled surface, and on an ink-filled surface */
+  --on-pop: var(--pal-ink);
+  --on-ink: var(--pal-card);
+  --focus: var(--pal-pop-text);
+  --ok: #1b7a44;
+
+  /* the cassette */
+  --tape-shell: var(--pal-ink);
+  --tape-label: var(--pal-card);
+  --tape-label-ink: var(--pal-ink);
+  --tape-window: var(--pal-paper);
+
+  /* type */
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Reenie Beanie", "Comic Sans MS", cursive;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  /* scale */
+  --radius: 4px;
+  --border: 1.5px solid var(--text);
+  --gutter: clamp(16px, 4vw, 40px);
+  --max: 1160px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--pal-paper-dark);
+    --bg-raised: var(--pal-card-dark);
+    --bg-sunk: color-mix(in srgb, var(--pal-ink-dark) 6%, var(--pal-paper-dark));
+    --text: var(--pal-ink-dark);
+    --text-muted: color-mix(in srgb, var(--pal-ink-dark) 70%, var(--pal-paper-dark));
+    --line: color-mix(in srgb, var(--pal-ink-dark) 20%, transparent);
+    --pop: var(--pal-pop-dark);
+    --pop-text: var(--pal-pop-text-dark);
+    --on-pop: var(--pal-paper-dark);
+    --on-ink: var(--pal-paper-dark);
+    --focus: var(--pal-pop-text-dark);
+    --ok: #6fd59a;
+    --tape-shell: color-mix(in srgb, var(--pal-ink-dark) 22%, var(--pal-paper-dark));
+    --tape-label: var(--pal-ink-dark);
+    --tape-label-ink: var(--pal-paper-dark);
+    --tape-window: var(--pal-paper-dark);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: var(--pal-paper-dark);
+  --bg-raised: var(--pal-card-dark);
+  --bg-sunk: color-mix(in srgb, var(--pal-ink-dark) 6%, var(--pal-paper-dark));
+  --text: var(--pal-ink-dark);
+  --text-muted: color-mix(in srgb, var(--pal-ink-dark) 70%, var(--pal-paper-dark));
+  --line: color-mix(in srgb, var(--pal-ink-dark) 20%, transparent);
+  --pop: var(--pal-pop-dark);
+  --pop-text: var(--pal-pop-text-dark);
+  --on-pop: var(--pal-paper-dark);
+  --on-ink: var(--pal-paper-dark);
+  --focus: var(--pal-pop-text-dark);
+  --ok: #6fd59a;
+  --tape-shell: color-mix(in srgb, var(--pal-ink-dark) 22%, var(--pal-paper-dark));
+  --tape-label: var(--pal-ink-dark);
+  --tape-label-ink: var(--pal-paper-dark);
+  --tape-window: var(--pal-paper-dark);
+  color-scheme: dark;
+}

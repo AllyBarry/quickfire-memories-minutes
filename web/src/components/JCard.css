@@ -1,0 +1,94 @@
+/* Print piece: always the light inks. 15.9 + 12.7 + 63.5 = 92.1 mm wide, 101.6 mm tall. */
+.jcard {
+  container-type: inline-size;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 92.1 / 101.6;
+  display: grid;
+  grid-template-columns: 15.9fr 12.7fr 63.5fr;
+  background: var(--pal-card);
+  color: var(--pal-ink);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06), 0 14px 30px -16px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.jcard > div {
+  min-width: 0;
+  border-right: 1px dashed color-mix(in srgb, var(--pal-ink) 40%, transparent);
+}
+.jcard > div:last-child {
+  border-right: 0;
+}
+.jcard__flap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2cqw;
+  padding: 3cqw 2cqw;
+  font: 600 2.3cqw/1.2 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.jcard__spine {
+  background: var(--pal-ink);
+  color: var(--pal-card);
+  display: grid;
+  place-items: center;
+}
+.jcard__spine span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font: 800 3.4cqw/1 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 96%;
+}
+.jcard__front {
+  padding: 5cqw 4.5cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5cqw;
+  --pop: var(--pal-pop);
+}
+.jcard__title {
+  font: 900 8.4cqw/0.9 var(--font-display);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+.jcard__for {
+  font-size: 7cqw;
+  line-height: 1;
+  color: var(--pal-pop-text);
+  transform: rotate(-2deg);
+  transform-origin: left;
+}
+.jcard__sides {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3cqw;
+  border-top: 1.5px solid var(--pal-ink);
+  padding-top: 2.5cqw;
+}
+.jcard__side {
+  font: 600 2.4cqw var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pal-pop-text);
+  margin-bottom: 1cqw;
+}
+.jcard__sides ol {
+  margin: 0;
+  padding-left: 3cqw;
+  font-size: 2.5cqw;
+  line-height: 1.35;
+}
+.jcard__sides li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

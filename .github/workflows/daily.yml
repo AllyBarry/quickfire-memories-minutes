@@ -1,0 +1,32 @@
+name: Daily jobs
+
+# Cloudflare Pages has no cron triggers, so GitHub runs the daily jobs:
+# auto-close tapes past their deadline, "two days left" reminders, and the 5-year retention clean-up.
+# 06:00 UTC is 08:00 in South Africa. Every job is safe to run twice, so a manual re-run never harms.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://minutes.qfm.co.za' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Call /api/cron
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "::error::Missing repository secret CRON_SECRET (see docs/DEPLOY.md)"; exit 1; fi
+          for i in 1 2 3; do
+            status=$(curl -s -o result.json -w '%{http_code}' -X POST "$SITE_URL/api/cron" -H "Authorization: Bearer $CRON_SECRET")
+            [ "$status" = "200" ] && break
+            echo "Attempt $i got HTTP $status, retrying in 30s"; sleep 30
+          done
+          cat result.json; echo
+          if [ "$status" != "200" ]; then echo "::error::The daily jobs didn't run (HTTP $status)."; exit 1; fi
+          if grep -q '"failed:' result.json; then echo "::error::One of the daily jobs failed. See the result above and the Pages Functions logs."; exit 1; fi
