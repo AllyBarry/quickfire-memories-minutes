@@ -17,7 +17,7 @@ An npm workspaces monorepo, laid out like `../thirty-years-in-thirty-seconds`:
 
 | Folder | Package | What it is |
 | --- | --- | --- |
-| [apps/web/](apps/web/) | `@yir/web` | The web app: sales page, checkout, the friend's song pick, the organiser's dashboard and running order, the tape, staff admin, and a clickable demo on sample data at `/demo/*` |
+| [apps/web/](apps/web/) | `@yir/web` | The web app: sales page, checkout, the friend's song pick, the organiser's dashboard and running order, the tape, staff admin, and a clickable demo on sample data at `/demo/*` (local and the one-file demo build only, not deployed) |
 | [apps/api/](apps/api/) | `@yir/api` | The API as Cloudflare Pages Functions: Hono, Better Auth magic links, D1, R2 photos, Resend, Paystack, song.link |
 | [packages/shared/](packages/shared/) | `@yir/shared` | The rules both must agree on: plans and prices, inks, field limits, and deadlines in South African time |
 | [.github/workflows/](.github/workflows/) | | `deploy.yml` tests and deploys to Cloudflare Pages. `daily.yml` runs the daily jobs. |

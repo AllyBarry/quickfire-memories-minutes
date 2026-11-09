@@ -13,6 +13,7 @@ import { StepList, type Step } from "../components/StepList";
 import { TapePlayer } from "../components/TapePlayer";
 import { navigate } from "../lib/router";
 import { trackCode } from "../lib/tape";
+import { SHOW_DEMO } from "../lib/flags";
 import "./HomePage.css";
 
 const tape = sampleTape;
@@ -146,11 +147,13 @@ export function HomePage() {
             <p className="pieces__cap">One card per friend, 63 x 88 mm, matt laminate. The QR code opens their song in whatever app the guest uses.</p>
           </div>
         </div>
-        <div className="row home-more">
-          <Button href="/demo/tape" variant="ghost">
-            See the whole sample tape
-          </Button>
-        </div>
+        {SHOW_DEMO && (
+          <div className="row home-more">
+            <Button href="/demo/tape" variant="ghost">
+              See the whole sample tape
+            </Button>
+          </div>
+        )}
       </Section>
 
       <Section id="pricing" eyebrow="Pricing" title="One price per tape. No subscriptions." intro="Hosting and song links are included. Choose your two inks and every piece updates.">
@@ -167,6 +170,7 @@ export function HomePage() {
         <p className="pricing__note muted small">Printed tapes ship in a weekly print run. Order at least four weeks before the party.</p>
       </Section>
 
+      {SHOW_DEMO && (
       <Section id="flow" tone="sunk" eyebrow="Demo" title="Walk through the whole flow" intro="Every step of the product on sample data, kept in your browser. What you do on one page shows up on the next.">
         <ol className="flowlinks">
           {flowLinks.map((f) => (
@@ -180,6 +184,7 @@ export function HomePage() {
           ))}
         </ol>
       </Section>
+      )}
 
       <Section id="faq" eyebrow="Questions" title="Good to know">
         <Faq items={faqs} />

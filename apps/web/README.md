@@ -24,7 +24,7 @@ npm run build:single   # dist-single/index.html, one self-contained file (the de
 | `/organiser` | Organisers | Magic-link sign-in, then their tapes |
 | `/organiser/<id>`, `/order`, `/tape` | Organisers | Dashboard, running order, and a preview of the tape and printed pieces |
 | `/admin` | Staff | Tapes (with the print queue), requests, add organiser, organisers. Behind Cloudflare Access. |
-| `/demo/start`, `/pick`, `/organiser`, `/order`, `/tape` | Anyone | The same flow on sample data kept in this browser. "Reset demo" on the dashboard starts over. |
+| `/demo/start`, `/pick`, `/organiser`, `/order`, `/tape` | Developers, demo file | The same flow on sample data kept in this browser. "Reset demo" on the dashboard starts over. Only in `npm run dev` and `npm run build:single`: the production build that Pages deploys has no demo routes or links ([src/lib/flags.ts](src/lib/flags.ts)). |
 
 Routing is by path ([src/lib/router.ts](src/lib/router.ts)), so share links and QR links are plain URLs and Access can protect `/admin`.
 Links to `/api/*` and `/go/*` always go to the server.
@@ -58,6 +58,21 @@ Each ink pair has a `popText` shade for small text, because bright inks like sun
 The API validates against the same lists, so a change there applies to both.
 
 [public/_headers](public/_headers) sets the security headers and a Content Security Policy for the static files on Pages.
+It also sends `X-Robots-Tag: noindex` on every path except the home page, because share links, tapes and edit links hold friends' notes and photos.
+[public/robots.txt](public/robots.txt) lets crawlers in so they see that header, and keeps them out of `/api/` and `/go/`.
+
+## Icons, manifest and link previews
+
+| File | What it is |
+| --- | --- |
+| `public/favicon.svg` | The mini cassette. Switches to light ink on dark browser tabs. |
+| `public/favicon.ico` | 16, 32 and 48 px for older browsers. The 16 px one is simplified so the reels stay readable. |
+| `public/apple-touch-icon.png`, `icon-192.png`, `icon-512.png` | Home-screen icons on the paper colour, with the cassette inside the maskable safe zone |
+| `public/site.webmanifest` | Name, description, start URL, colours and icons for installing the site |
+| `public/og.png` | The 1200 x 630 link preview for WhatsApp, email and social. Its source is [brand/og-image.html](brand/og-image.html): change that, open it at 1200 x 630 and screenshot it. |
+
+Every page shares the preview tags in `index.html`, so a share link previews as the product, not the tape.
+Tab titles are set per route in [src/lib/router.ts](src/lib/router.ts) (`titleFor`), and the share link adds the guest of honour's name once the tape loads.
 
 ## Staying clear of Spotify
 

@@ -31,7 +31,7 @@ One Cloudflare Pages project serves everything on one domain. Deployment: [DEPLO
 | `/organiser/<id>/order` | Organisers | Running order: edit, reorder, hide, approve |
 | `/organiser/<id>/tape` | Organisers | Preview of the tape and the printed pieces |
 | `/admin` | Staff | Tapes, requests, add organiser, organisers |
-| `/demo/*` | Anyone | The clickable demo on sample data in the browser |
+| `/demo/*` | Developers | The clickable demo on sample data in the browser. Local development and the one-file demo build only, never deployed. |
 
 The organiser pages are the same components in the demo and for real. They read one context (`useTape`), which
 `DemoStoreProvider` fills from localStorage and `LiveTapeProvider` fills from the API.

@@ -4,6 +4,7 @@ import { Field } from "../components/Field";
 import { atNoon, fmtDate, fmtDateTime, planById } from "@yir/shared";
 import { api, ApiError, type ApiTape } from "../lib/api";
 import { navigate } from "../lib/router";
+import { SHOW_DEMO } from "../lib/flags";
 import "./flow.css";
 
 interface Me {
@@ -112,12 +113,14 @@ export function OrganiserHomePage({ next }: { next?: string }) {
           <aside>
             <div className="panel">
               <h3>No tape yet?</h3>
-              <p className="muted small">Start one, or try the organiser dashboard on sample data first.</p>
+              <p className="muted small">{SHOW_DEMO ? "Start one, or try the organiser dashboard on sample data first." : "Ask whoever organised it to add you, or start one of your own."}</p>
               <div className="row">
                 <Button href="/start">Start a tape</Button>
-                <Button href="/demo/organiser" variant="ghost">
-                  Try the demo
-                </Button>
+                {SHOW_DEMO && (
+                  <Button href="/demo/organiser" variant="ghost">
+                    Try the demo
+                  </Button>
+                )}
               </div>
             </div>
           </aside>

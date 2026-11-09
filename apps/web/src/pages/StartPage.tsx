@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button } from "../components/Button";
 import { Cassette } from "../components/Cassette";
 import { Field } from "../components/Field";
@@ -6,8 +6,9 @@ import { InkPicker } from "../components/InkPicker";
 import { ShareLink } from "../components/ShareLink";
 import { atNoon, daysUntil, fmtDate, formatZar, LIMITS, minPartyDate, planById, plans, timeline } from "@yir/shared";
 import { api, ApiError } from "../lib/api";
-import { useTape, type Order } from "../lib/demoStore";
+import { TapeContext, type Order } from "../lib/demoStore";
 import { useInk } from "../lib/InkContext";
+import { SHOW_DEMO } from "../lib/flags";
 import "./flow.css";
 
 const STEPS = ["Who it's for", "Plan and inks", "Your details", "Pay"] as const;
@@ -33,10 +34,11 @@ const blankOrder = (planId: string): Order => ({
  * Otherwise the demo, which saves into the demo store and simulates payment.
  */
 export function StartPage({ live = false, initialPlan = "boxed" }: { live?: boolean; initialPlan?: string }) {
-  const store = useTape();
+  // The demo store only exists on /demo/start. The live checkout keeps its own state.
+  const demo = useContext(TapeContext);
   const { ink } = useInk();
   const [liveOrder, setLiveOrder] = useState<Order>(() => blankOrder(initialPlan));
-  const order = live ? liveOrder : store.order;
+  const order = live || !demo ? liveOrder : demo.order;
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -57,7 +59,7 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
   // a new party date or plan moves the deadlines, so drop any custom close time
   const set = (patch: Partial<Order>) => {
     if (live) return setLiveOrder((o) => ({ ...o, ...patch }));
-    store.dispatch({ type: "order", patch: "partyDate" in patch || "planId" in patch ? { ...patch, closeAt: undefined } : patch });
+    demo?.dispatch({ type: "order", patch: "partyDate" in patch || "planId" in patch ? { ...patch, closeAt: undefined } : patch });
   };
 
   const validate = () => {
@@ -152,11 +154,13 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                 </li>
               ))}
             </ol>
-            <div className="row">
-              <Button href="/demo/organiser" variant="ghost">
-                Try the dashboard demo meanwhile
-              </Button>
-            </div>
+            {SHOW_DEMO && (
+              <div className="row">
+                <Button href="/demo/organiser" variant="ghost">
+                  Try the dashboard demo meanwhile
+                </Button>
+              </div>
+            )}
           </div>
           <aside>
             <Summary order={order} />
@@ -188,8 +192,8 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
               ))}
             </ol>
             <div className="row">
-              <Button href={store.links.dashboard}>Open your dashboard</Button>
-              <Button href={store.links.pick} variant="ghost">
+              <Button href={demo?.links.dashboard ?? "/organiser"}>Open your dashboard</Button>
+              <Button href={demo?.links.pick ?? `/${order.slug}`} variant="ghost">
                 See what friends see
               </Button>
             </div>

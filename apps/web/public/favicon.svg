@@ -18,6 +18,4 @@
   <circle class="shell" cx="22.5" cy="27.5" r="1.6"/>
   <circle class="shell" cx="41.5" cy="27.5" r="1.6"/>
   <path class="label" d="M15 53 L19.5 43 H44.5 L49 53 Z"/>
-  <circle class="shell" cx="25" cy="48.5" r="1.8"/>
-  <circle class="shell" cx="39" cy="48.5" r="1.8"/>
 </svg>

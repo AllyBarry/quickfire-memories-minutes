@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SHOW_DEMO } from "./flags";
 
 /**
  * A small path router. Real paths (not "#/...") so Cloudflare Access can protect /admin,
@@ -87,7 +88,7 @@ export function titleFor(parts: string[]): string | undefined {
   if (a === "start") return "Start a tape";
   if (a === "checkout") return "Payment received";
   if (a === "admin") return "Admin";
-  if (a === "demo") return { start: "Demo: checkout", pick: "Demo: pick a song", organiser: "Demo: dashboard", order: "Demo: running order", tape: "Demo: the tape" }[b ?? ""] ?? "Demo";
+  if (a === "demo") return !SHOW_DEMO ? "Page not found" : { start: "Demo: checkout", pick: "Demo: pick a song", organiser: "Demo: dashboard", order: "Demo: running order", tape: "Demo: the tape" }[b ?? ""] ?? "Demo";
   if (a === "organiser") return !b ? "Your tapes" : c === "order" ? "Running order" : c === "tape" ? "Tape preview" : "Dashboard";
   if (b === "edit") return "Change your song";
   return "A tape";

@@ -14,6 +14,7 @@ import { CuratePage } from "./pages/CuratePage";
 import { AdminPage } from "./pages/AdminPage";
 import { PublicTapePage } from "./pages/PublicTapePage";
 import { EditTrackPage } from "./pages/EditTrackPage";
+import { SHOW_DEMO } from "./lib/flags";
 import { CheckoutCompletePage, NotFoundPage, OrganiserHomePage } from "./pages/OrganiserHomePage";
 
 function Redirect({ to }: { to: string }) {
@@ -38,7 +39,7 @@ function DemoBanner() {
  *   /<slug>/edit/<id>#token   a friend's private edit link
  *   /organiser                sign in, your tapes /organiser/<id>[/order|/tape]  dashboard, running order, preview
  *   /admin                    staff (Cloudflare Access)
- *   /demo/...                 the clickable demo on sample data
+ *   /demo/...                 the clickable demo on sample data (development and build:single only, see lib/flags.ts)
  * /api/* and /go/* never reach this app: Pages Functions answer them.
  */
 function Page({ parts, hash, query }: { parts: string[]; hash: string; query: URLSearchParams }): ReactNode {
@@ -52,14 +53,15 @@ function Page({ parts, hash, query }: { parts: string[]; hash: string; query: UR
     case "admin":
       return <AdminPage />;
     case "demo": {
+      if (!SHOW_DEMO) return <NotFoundPage />;
       const page =
         b === "start" ? <StartPage /> : b === "pick" ? <ContributePage /> : b === "organiser" ? <OrganiserPage /> : b === "order" ? <CuratePage /> : b === "tape" ? <TapePage /> : null;
       if (!page) return <Redirect to="/#flow" />;
       return (
-        <>
+        <DemoStoreProvider>
           <DemoBanner />
           {page}
-        </>
+        </DemoStoreProvider>
       );
     }
     case "organiser": {
@@ -85,8 +87,7 @@ export function App() {
   useEffect(() => setTitle(titleFor(route.parts)), [route.path]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <InkProvider>
-      <DemoStoreProvider>
-        <a
+      <a
           className="sr-only skip"
           href="#main"
           onClick={(e) => {
@@ -101,7 +102,6 @@ export function App() {
           <Page parts={route.parts} hash={route.hash} query={route.query} />
         </main>
         <SiteFooter />
-      </DemoStoreProvider>
     </InkProvider>
   );
 }
