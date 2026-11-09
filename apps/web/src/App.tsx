@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { navigate, useLinkInterception, useRoute } from "./lib/router";
+import { navigate, setTitle, titleFor, useLinkInterception, useRoute } from "./lib/router";
 import { InkProvider } from "./lib/InkContext";
 import { DemoStoreProvider } from "./lib/demoStore";
 import { LiveTapeProvider } from "./lib/liveTape";
@@ -82,6 +82,7 @@ function Page({ parts, hash, query }: { parts: string[]; hash: string; query: UR
 export function App() {
   const route = useRoute();
   useLinkInterception();
+  useEffect(() => setTitle(titleFor(route.parts)), [route.path]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <InkProvider>
       <DemoStoreProvider>

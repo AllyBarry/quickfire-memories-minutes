@@ -1,3 +1,4 @@
+import { setTitle } from "../lib/router";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../components/Button";
 import { LinerNote } from "../components/LinerNote";
@@ -52,6 +53,10 @@ export function PublicTapePage({ slug }: { slug: string }) {
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => {
+    if (tape) setTitle(tape.state === "live" ? `${tape.honoree}'s tape` : `Pick a song for ${tape.honoree}`);
+    else if (problem === "not_found") setTitle("Tape not found");
+  }, [tape, problem]);
 
   if (problem) {
     return (

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A mini cassette in the default Night & neon inks, with lighter ink for dark browser tabs. -->
+  <style>
+    .shell { fill: #1d2a73 }
+    .label { fill: #e6e9ee }
+    .reel { fill: #ff3fa4 }
+    @media (prefers-color-scheme: dark) {
+      .shell { fill: #dfe4ff }
+      .label { fill: #10132a }
+      .reel { fill: #ff68ba }
+    }
+  </style>
+  <rect class="shell" x="2" y="11" width="60" height="42" rx="5"/>
+  <rect class="label" x="7" y="15" width="50" height="23" rx="3"/>
+  <rect class="shell" x="14" y="21.5" width="36" height="12" rx="6"/>
+  <circle class="reel" cx="22.5" cy="27.5" r="4.2"/>
+  <circle class="reel" cx="41.5" cy="27.5" r="4.2"/>
+  <circle class="shell" cx="22.5" cy="27.5" r="1.6"/>
+  <circle class="shell" cx="41.5" cy="27.5" r="1.6"/>
+  <path class="label" d="M15 53 L19.5 43 H44.5 L49 53 Z"/>
+  <circle class="shell" cx="25" cy="48.5" r="1.8"/>
+  <circle class="shell" cx="39" cy="48.5" r="1.8"/>
+</svg>

@@ -72,3 +72,23 @@ export function useLinkInterception() {
     return () => document.removeEventListener("click", on);
   }, []);
 }
+
+const SITE = "Years in Rotation";
+
+/** Sets the browser tab title, as "<title> · Years in Rotation", or just the site name. */
+export function setTitle(title?: string) {
+  document.title = title ? `${title} · ${SITE}` : SITE;
+}
+
+/** The tab title for a route. Pages with their own data (a tape's guest of honour) refine it once loaded. */
+export function titleFor(parts: string[]): string | undefined {
+  const [a, b, c] = parts;
+  if (!a) return undefined;
+  if (a === "start") return "Start a tape";
+  if (a === "checkout") return "Payment received";
+  if (a === "admin") return "Admin";
+  if (a === "demo") return { start: "Demo: checkout", pick: "Demo: pick a song", organiser: "Demo: dashboard", order: "Demo: running order", tape: "Demo: the tape" }[b ?? ""] ?? "Demo";
+  if (a === "organiser") return !b ? "Your tapes" : c === "order" ? "Running order" : c === "tape" ? "Tape preview" : "Dashboard";
+  if (b === "edit") return "Change your song";
+  return "A tape";
+}

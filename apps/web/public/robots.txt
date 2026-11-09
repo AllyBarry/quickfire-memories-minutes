@@ -1,0 +1,5 @@
+# Search engines may crawl, so they can see the "noindex" header (see _headers) on every page except the home page.
+# Share links, tapes, edit links, organiser and admin pages hold friends' notes and photos and stay out of search results.
+User-agent: *
+Disallow: /api/
+Disallow: /go/
