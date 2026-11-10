@@ -6,7 +6,8 @@ import { requireStaff } from "../lib/access";
 import { audit, nowIso } from "../lib/audit";
 import { getTape, servePhoto, tapeCounts, tapeView, trackView, uniqueSlug, type TapeRow, type TrackRow } from "../lib/db";
 import { randomId } from "../lib/ids";
-import { INK_IDS, isPrinted, LIMITS, minPartyDate, PLAN_IDS, planById } from "@yir/shared";
+import { loadPricing, priceNow } from "../lib/pricing";
+import { INK_IDS, isPrinted, LIMITS, minPartyDate, PLAN_IDS } from "@yir/shared";
 import { bornYear, email as emailField, Invalid, intInRange, isoDate, oneOf, text } from "../lib/validate";
 
 /** Staff only (Cloudflare Access). Every write is audited with the staff member's email. */
@@ -151,7 +152,7 @@ adminRoutes.post("/organisers", async (c) => {
   const invited = intInRange(t.invited, "tape.invited", 1, 80, 20);
   const p = body.payment ?? {};
   const paymentStatus = oneOf(p.status ?? "comped", "payment.status", ["paid", "comped"] as const);
-  const amount = paymentStatus === "paid" ? intInRange(p.amountZar, "payment.amountZar", 0, 100000, planById(planId).priceZar) : 0;
+  const amount = paymentStatus === "paid" ? intInRange(p.amountZar, "payment.amountZar", 0, 100000, await priceNow(c.env, planId)) : 0;
   const note = text(p.note, "payment.note", 200, { required: false }) || null;
 
   const tapeId = randomId();
@@ -235,6 +236,40 @@ adminRoutes.post("/enquiries/:id/handled", async (c) => {
   if (!res.meta.changes) throw new HTTPException(404, { message: "No open request with that id." });
   await audit(c.env, "staff", staff, "enquiry.handled", null, { enquiryId: c.req.param("id") });
   return c.json({ ok: true });
+});
+
+adminRoutes.get("/pricing", async (c) => c.json(await loadPricing(c.env)));
+
+/**
+ * Set a plan's standard price and sale. salePriceZar: null ends the sale. saleEndsAt: ISO time, or null for no end.
+ * The website shows the change within a minute, and new checkouts charge it straight away.
+ */
+adminRoutes.put("/pricing/:planId", async (c) => {
+  const staff = c.get("staffEmail")!;
+  const planId = oneOf(c.req.param("planId"), "planId", PLAN_IDS);
+  const body = await c.req.json<Record<string, unknown>>();
+  if (body.priceZar === undefined || body.priceZar === null || body.priceZar === "") throw new Invalid("priceZar", "Set the standard price.");
+  const priceZar = intInRange(body.priceZar, "priceZar", 1, 100000, 0);
+  const noSale = body.salePriceZar === undefined || body.salePriceZar === null || body.salePriceZar === "";
+  const salePriceZar = noSale ? null : intInRange(body.salePriceZar, "salePriceZar", 1, 100000, 0);
+  if (salePriceZar !== null && salePriceZar >= priceZar) throw new Invalid("salePriceZar", "The sale price must be lower than the standard price.");
+  const saleLabel = salePriceZar === null ? null : text(body.saleLabel, "saleLabel", 40, { required: false }) || null;
+  let saleEndsAt: string | null = null;
+  if (salePriceZar !== null && body.saleEndsAt) {
+    const d = new Date(String(body.saleEndsAt));
+    if (Number.isNaN(d.getTime())) throw new Invalid("saleEndsAt", "Pick a valid end date and time.");
+    if (d.getTime() <= Date.now()) throw new Invalid("saleEndsAt", "The sale end must be in the future.");
+    saleEndsAt = d.toISOString();
+  }
+  await c.env.DB.prepare(
+    `INSERT INTO plan_price (plan_id, price_zar, sale_price_zar, sale_label, sale_ends_at, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (plan_id) DO UPDATE SET price_zar = excluded.price_zar, sale_price_zar = excluded.sale_price_zar, sale_label = excluded.sale_label,
+       sale_ends_at = excluded.sale_ends_at, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+  )
+    .bind(planId, priceZar, salePriceZar, saleLabel, saleEndsAt, nowIso(), staff)
+    .run();
+  await audit(c.env, "staff", staff, "pricing.update", null, { planId, priceZar, salePriceZar, saleLabel, saleEndsAt });
+  return c.json((await loadPricing(c.env)).find((p) => p.planId === planId));
 });
 
 adminRoutes.get("/audit", async (c) => {

@@ -21,7 +21,7 @@ One Cloudflare Pages project serves everything on one domain. Deployment: [DEPLO
 | Path | Who | What |
 | --- | --- | --- |
 | `/` | Buyers | Sales page with the playable sample tape |
-| `/start` | Buyers | Checkout. Paystack when it's on, otherwise a "reserve a tape" request |
+| `/start` | Buyers | Order details, then "Coming soon": the last step is a waitlist sign-up that goes to the site administrator. Online payment (Paystack) is built but not offered yet. |
 | `/checkout/complete` | Buyers | Where Paystack sends them back |
 | `/<slug>` | Friends, then guests | The share link. The song-pick form while open, a closed notice, then the finished tape once approved |
 | `/<slug>/edit/<id>#<token>` | One friend | Their private link to change or delete their song. The token stays in the `#` part, so it never reaches server logs. |
@@ -30,7 +30,7 @@ One Cloudflare Pages project serves everything on one domain. Deployment: [DEPLO
 | `/organiser/<id>` | Organisers | Dashboard: picks, deadline, share link, reminders, timeline, inks |
 | `/organiser/<id>/order` | Organisers | Running order: edit, reorder, hide, approve |
 | `/organiser/<id>/tape` | Organisers | Preview of the tape and the printed pieces |
-| `/admin` | Staff | Tapes, requests, add organiser, organisers |
+| `/admin` | Staff | Tapes, requests, add organiser, organisers, pricing and sales |
 | `/demo/*` | Developers | The clickable demo on sample data in the browser. Local development and the one-file demo build only, never deployed. |
 
 The organiser pages are the same components in the demo and for real. They read one context (`useTape`), which
@@ -67,7 +67,8 @@ Rules the API enforces on the server:
 | `GET, PATCH, DELETE /api/public/tracks/:id` | friend (`X-Edit-Token`) | Own song |
 | `PUT, DELETE /api/public/tracks/:id/photo` | friend (`X-Edit-Token`) | Replace or remove their photo |
 | `GET /api/public/tracks/:id/photo` | guest | Photo, once the tape is live |
-| `POST /api/public/enquiries` | anyone | "Reserve a tape" while checkout is off. Emails `STAFF_EMAIL`. |
+| `POST /api/public/enquiries` | anyone | Waitlist sign-up from the last step of `/start` while online ordering is coming soon. Saved for the admin (Requests) and emailed to the site administrator (`STAFF_EMAIL`). |
+| `GET /api/public/pricing` | anyone | Advertised prices per plan: `priceZar`, plus `salePriceZar`, `saleLabel` and `saleEndsAt` while a sale is set. Cached for 60 seconds. |
 | `GET /go/:id` | guest | QR redirect: song.link page, the friend's link, or a search |
 | `GET /api/me` | organiser | Their tapes |
 | `GET, PATCH /api/tapes/:id` | organiser | Tape. PATCH `closeAt` (ISO, `null` = suggested, `"now"`), `inkId`, `invited` |
@@ -82,7 +83,8 @@ Rules the API enforces on the server:
 | `GET /api/admin/enquiries`, `POST .../:id/handled` | staff | Tape requests |
 | `DELETE /api/admin/tracks/:id` | staff | Privacy removal (`reason` required). Removes the song and photo. |
 | `GET /api/admin/audit?tapeId=` | staff | Audit log |
-| `GET, POST /api/checkout` | anyone | Whether checkout is on, and start a Paystack payment |
+| `GET /api/admin/pricing`, `PUT /api/admin/pricing/:planId` | staff | Standard price and sale per plan. PUT `priceZar`, `salePriceZar` (lower than the standard price, `null` ends the sale), `saleLabel`, `saleEndsAt` (a future ISO time, or `null`). Checkout and new paid orders use the price showing at the time. Audited. |
+| `GET, POST /api/checkout` | anyone | Whether checkout is on, and start a Paystack payment. Not used by `/start` while ordering is coming soon. |
 | `POST /api/webhooks/paystack` | Paystack | Signed (HMAC-SHA512) and idempotent |
 | `POST /api/cron` | daily job | Auto-close, reminders, retention |
 
@@ -100,7 +102,7 @@ Each job is safe to run twice.
 
 - `packages/shared`: 11 unit tests cover the deadlines in South African time (including browsers in other time zones), the print run and the timeline.
 - `apps/api`: typechecks. 13 unit tests cover open and closed tapes, ids, tokens and slugs, validation, QR destinations and Paystack signatures.
-  60 end-to-end checks run against `wrangler pages dev` with local D1 and R2 and real Better Auth ([apps/api/test/e2e_local.py](../apps/api/test/e2e_local.py)).
+  70 end-to-end checks run against `wrangler pages dev` with local D1 and R2 and real Better Auth ([apps/api/test/e2e_local.py](../apps/api/test/e2e_local.py)).
 - `apps/web`: typechecks and builds. The whole flow was clicked through in a browser against the local stack:
   a friend picks a song, the organiser signs in from the emailed link and approves it, the share link turns into the tape, and the admin shows it.
 - Not yet run against real Cloudflare, Resend or Paystack accounts. That needs the one-time setup in [DEPLOY.md](DEPLOY.md).

@@ -12,7 +12,7 @@ GitHub Actions does the work:
 
 | Workflow | When | What runs |
 | --- | --- | --- |
-| [deploy.yml](../.github/workflows/deploy.yml) | Pull request touching `apps/`, `packages/` or the root package files | Typecheck, unit tests, web build, and 60 end-to-end checks against a local Pages server |
+| [deploy.yml](../.github/workflows/deploy.yml) | Pull request touching `apps/`, `packages/` or the root package files | Typecheck, unit tests, web build, and 70 end-to-end checks against a local Pages server |
 | [deploy.yml](../.github/workflows/deploy.yml) | Push to `main`, or **Run workflow** | The same checks, then config check, D1 migrations, secret sync, deploy and a smoke test |
 | [daily.yml](../.github/workflows/daily.yml) | Every day at 08:00 SAST, or **Run workflow** | Calls `/api/cron`: auto-close, "two days left" reminders, 5-year clean-up |
 
@@ -109,7 +109,7 @@ Every deploy pushes these secrets to the Pages project before the new code goes 
 1. Commit the filled-in `apps/api/wrangler.jsonc` and push to `main`, or open **Actions, then Deploy (Cloudflare Pages), then Run workflow**.
 2. The deploy job:
    1. checks secrets and config
-   2. applies the D1 migrations (`0001_auth.sql`, `0002_app.sql`)
+   2. applies any new D1 migrations from `apps/api/migrations` (`0001_auth.sql` to `0003_plan_pricing.sql` so far)
    3. creates the Pages project, custom domain and DNS record the first time
    4. syncs secrets
    5. deploys the web app and Functions

@@ -683,3 +683,13 @@
     transform: none;
   }
 }
+
+/* "Coming soon" tag on the last checkout step while online ordering is off */
+.soon {
+  display: inline-block;
+  justify-self: start;
+  margin: 0 0 4px;
+  padding: 5px 9px;
+  background: var(--pop);
+  color: var(--on-pop);
+}

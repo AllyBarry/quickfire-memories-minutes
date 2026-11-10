@@ -231,3 +231,25 @@
   align-items: center;
   font-size: 15px;
 }
+
+/* pricing tab: one form per plan */
+.admin__lede {
+  max-width: 70ch;
+  margin-bottom: 16px;
+}
+.pricing-admin {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.pricing-admin__plan {
+  display: grid;
+  gap: 14px;
+}
+.pricing-admin__now {
+  margin: 0;
+}
+.pricing-admin__now strong {
+  font: 800 20px var(--font-display);
+}

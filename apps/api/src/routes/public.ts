@@ -5,8 +5,9 @@ import { audit, nowIso } from "../lib/audit";
 import { checkPhoto, isOpen, LIVE_STATES, owner, photoKey, servePhoto, tapeView, trackView, type TapeRow, type TrackRow } from "../lib/db";
 import { sendEmail } from "../lib/email";
 import { randomId, randomToken, safeEqual, sha256Hex } from "../lib/ids";
+import { loadPricing } from "../lib/pricing";
 import { resolveSongPage, songDestination } from "../lib/songlink";
-import { INK_IDS, isPrinted, LIMITS, minPartyDate, PLAN_IDS, planById } from "@yir/shared";
+import { currentPrice, INK_IDS, inkById, isPrinted, LIMITS, minPartyDate, PLAN_IDS, planById } from "@yir/shared";
 import { bornYear, email as emailField, Invalid, intInRange, isoDate, link, longText, oneOf, pastDate, text } from "../lib/validate";
 
 /** No sign-in: friends (share link + private edit token), party guests (tape page and QR links) and enquiries. */
@@ -192,7 +193,16 @@ publicRoutes.get("/tracks/:id/photo", async (c) => {
   return servePhoto(c.env, row.photo_key);
 });
 
-/** "Reserve a tape" while online checkout is switched off. Staff hear about it by email. */
+/** Advertised prices for the website, with any sale staff have set. Cached for a minute at most. */
+publicRoutes.get("/pricing", async (c) => {
+  c.header("Cache-Control", "public, max-age=60");
+  return c.json(await loadPricing(c.env));
+});
+
+/**
+ * Waitlist sign-ups from the last step of /start while online ordering is coming soon.
+ * Saved for the admin (Requests tab) and emailed to the site administrator (STAFF_EMAIL).
+ */
 publicRoutes.post("/enquiries", async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   const planId = oneOf(body.planId, "planId", PLAN_IDS);
@@ -217,10 +227,24 @@ publicRoutes.post("/enquiries", async (c) => {
     .bind(e.id, e.name, e.email, e.honoree, e.occasion, e.partyDate, e.planId, e.inkId, e.bornYear, e.invited, e.message, nowIso())
     .run();
   try {
+    const plan = planById(e.planId);
+    const shown = currentPrice((await loadPricing(c.env)).find((p) => p.planId === e.planId)!);
     await sendEmail(c.env, {
       to: c.env.STAFF_EMAIL,
-      subject: `Tape request: ${e.honoree} ${e.occasion} (${e.planId})`,
-      text: `${e.name} <${e.email}> wants a ${e.planId} tape for ${e.honoree}, who ${e.occasion}.\nParty: ${e.partyDate}. About ${e.invited} friends.\n\n${e.message ?? ""}\n\nSet it up in the admin: ${c.env.APP_URL}/admin`,
+      subject: `Waitlist: ${e.honoree} ${e.occasion} (${plan.name})`,
+      text: [
+        `New waitlist sign-up from the website.`,
+        ``,
+        `Organiser: ${e.name} <${e.email}>`,
+        `Tape for: ${e.honoree}, who ${e.occasion}${e.bornYear ? ` (born ${e.bornYear})` : ""}`,
+        `Party date: ${e.partyDate}`,
+        `Plan: ${plan.name}, R${shown} at sign-up`,
+        `Inks: ${inkById(e.inkId).name}`,
+        `Friends invited: about ${e.invited}`,
+        e.message ? `\nTheir note:\n${e.message}` : ``,
+        ``,
+        `Reply to them within one working day, then set the tape up from Requests in the admin: ${c.env.APP_URL}/admin`,
+      ].join("\n"),
     });
   } catch (err) {
     console.error("enquiry email failed", err); // the enquiry is saved, staff still see it in the admin

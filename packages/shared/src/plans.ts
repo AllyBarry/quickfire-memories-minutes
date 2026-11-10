@@ -66,3 +66,27 @@ export const plans: Plan[] = [
 export const planById = (id: string): Plan => plans.find((p) => p.id === id) ?? plans[1];
 export const formatZar = (n: number) => "R" + n.toLocaleString("en-ZA");
 export const isPrinted = (planId: string) => planById(planId).printed;
+
+/** A plan's advertised price as staff set it in the admin (stored in D1, table plan_price). */
+export interface PlanPricing {
+  planId: PlanId;
+  /** The standard price, in rand. */
+  priceZar: number;
+  /** A lower price while a sale runs, or null for no sale. */
+  salePriceZar: number | null;
+  /** Shown on the price card, e.g. "Launch special". */
+  saleLabel: string | null;
+  /** ISO time the sale ends by itself, or null to run until staff turn it off. */
+  saleEndsAt: string | null;
+}
+
+/** The built-in prices: what the database starts with, and what the site shows if it can't load prices. */
+export const DEFAULT_PRICING: PlanPricing[] = PLAN_IDS.map((planId) => ({ planId, priceZar: planById(planId).priceZar, salePriceZar: null, saleLabel: null, saleEndsAt: null }));
+
+/** Whether a sale is running: a lower sale price that hasn't reached its end time. */
+export function saleActive(p: PlanPricing, now = Date.now()) {
+  return p.salePriceZar !== null && p.salePriceZar < p.priceZar && (!p.saleEndsAt || Date.parse(p.saleEndsAt) > now);
+}
+
+/** What the plan costs right now. */
+export const currentPrice = (p: PlanPricing, now = Date.now()) => (saleActive(p, now) ? p.salePriceZar! : p.priceZar);

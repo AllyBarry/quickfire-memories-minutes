@@ -29,7 +29,7 @@ In development:
 ```bash
 npm run typecheck
 npm test                      # 13 unit tests: open/closed, ids and tokens, validation, QR destinations, Paystack signatures
-npm run e2e                   # 60 end-to-end checks against a running `wrangler pages dev`
+npm run e2e                   # 70 end-to-end checks against a running `wrangler pages dev`
 ```
 
 The end-to-end script needs the server started with its URLs pointing at itself:
@@ -70,7 +70,7 @@ attaches the custom domain and adds its DNS record when they're missing, since P
 | `src/auth.ts` | Better Auth (D1, magic link, organiser-only emails) |
 | `src/routes/public.ts` | Song pick, own-song edits, the live tape, photos, requests, QR redirects |
 | `src/routes/organiser.ts` | Dashboard, deadline, inks, running order, approval, co-organisers |
-| `src/routes/admin.ts` | Staff: tapes, organisers (add and send link), requests, privacy removal, audit |
+| `src/routes/admin.ts` | Staff: tapes, organisers (add and send link), requests, privacy removal, audit, prices and sales |
 | `src/routes/payments.ts` | Checkout (off by default) and the Paystack webhook |
 | `src/cron.ts` | Auto-close, reminders, retention |
 | `src/lib/` | Validation, ids and tokens, email, audit, access checks, Paystack, song.link, D1 and R2 helpers |

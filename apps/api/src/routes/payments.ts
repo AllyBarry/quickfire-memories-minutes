@@ -6,7 +6,8 @@ import { audit, nowIso } from "../lib/audit";
 import { owner, uniqueSlug } from "../lib/db";
 import { randomId } from "../lib/ids";
 import { initialisePayment, verifyPaystackSignature } from "../lib/paystack";
-import { INK_IDS, isPrinted, LIMITS, minPartyDate, PLAN_IDS, planById } from "@yir/shared";
+import { priceNow } from "../lib/pricing";
+import { INK_IDS, isPrinted, LIMITS, minPartyDate, PLAN_IDS } from "@yir/shared";
 import { bornYear, email as emailField, Invalid, intInRange, isoDate, oneOf, text } from "../lib/validate";
 
 export const paymentRoutes = new Hono<AppEnv>();
@@ -36,6 +37,8 @@ paymentRoutes.post("/checkout", async (c) => {
 
   const tapeId = randomId();
   const reference = `yir-${tapeId}`;
+  // the price showing right now (the sale price while one runs). The webhook checks Paystack charged exactly this.
+  const amountZar = await priceNow(c.env, planId);
   const now = nowIso();
   await c.env.DB.batch([
     c.env.DB.prepare("INSERT INTO organiser (email, name, source, created_at) VALUES (?, ?, 'checkout', ?) ON CONFLICT (email) DO UPDATE SET name = excluded.name").bind(email, name, now),
@@ -48,14 +51,14 @@ paymentRoutes.post("/checkout", async (c) => {
       randomId(),
       tapeId,
       reference,
-      planById(planId).priceZar,
+      amountZar,
       now,
       now,
     ),
   ]);
   const url = await initialisePayment(c.env.PAYSTACK_SECRET_KEY, {
     email,
-    amountZar: planById(planId).priceZar,
+    amountZar,
     reference,
     callbackUrl: `${c.env.APP_URL}/checkout/complete`,
     tapeId,

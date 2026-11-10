@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { Button } from "../components/Button";
 import { Cassette } from "../components/Cassette";
 import { Field } from "../components/Field";
@@ -9,6 +9,8 @@ import { api, ApiError } from "../lib/api";
 import { TapeContext, type Order } from "../lib/demoStore";
 import { useInk } from "../lib/InkContext";
 import { SHOW_DEMO } from "../lib/flags";
+import { usePrice } from "../lib/pricing";
+import { Price } from "../components/PricingCard";
 import "./flow.css";
 
 const STEPS = ["Who it's for", "Date and plan", "Your details", "Pay"] as const;
@@ -43,20 +45,13 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<"" | "paid" | "requested">("");
-  const [checkoutOpen, setCheckoutOpen] = useState<boolean | null>(live ? null : true);
   const [note, setNote] = useState("");
   const [payError, setPayError] = useState("");
   const plan = planById(order.planId);
+  const price = usePrice(order.planId); // today's price, the sale price while one runs
   const printed = plan.printed;
   /** The party is too soon for any printed plan (the radios for Boxed and Double album are disabled). */
   const printTooSoon = !!order.partyDate && order.partyDate < minPartyDate(true);
-
-  useEffect(() => {
-    if (!live) return;
-    api<{ enabled: boolean }>("/api/checkout")
-      .then((r) => setCheckoutOpen(r.enabled))
-      .catch(() => setCheckoutOpen(false));
-  }, [live]);
 
   // a new party date or plan moves the deadlines, so drop any custom close time
   const set = (patch: Partial<Order>) => {
@@ -118,12 +113,9 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
       }, 1400);
       return;
     }
+    // Online ordering is coming soon: the live store takes waitlist sign-ups, which go to the site admin
+    // (emailed to STAFF_EMAIL and listed under Requests in /admin). The Paystack checkout API stays in place for later.
     try {
-      if (checkoutOpen) {
-        const res = await api<{ paymentUrl: string }>("/api/checkout", { method: "POST", json: details() });
-        window.location.assign(res.paymentUrl);
-        return;
-      }
       await api("/api/public/enquiries", { method: "POST", json: { ...details(), message: note } });
       setDone("requested");
       window.scrollTo(0, 0);
@@ -140,10 +132,11 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
     return (
       <div className="wrap app">
         <header className="app__head">
-          <p className="label app__eyebrow">Request sent</p>
-          <h1>We'll set up {order.honoree}'s tape</h1>
+          <p className="label app__eyebrow">You're on the waitlist</p>
+          <h1>Thanks, we've got {order.honoree}'s tape on our list</h1>
           <p>
-            We'll email {order.organiserEmail} within one working day with how to pay. As soon as that's done, you get your share link and dashboard.
+            Online ordering opens soon. Your details are with our team, and we'll email {order.organiserEmail} within one working day to set up {order.honoree}'s tape. Nothing has
+            been charged.
           </p>
         </header>
         <div className="split">
@@ -209,7 +202,7 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
     );
   }
 
-  const payStepTitle = live && checkoutOpen === false ? "Reserve your tape" : "Pay";
+  const payStepTitle = live ? "Join the waitlist" : "Pay";
 
   return (
     <div className="wrap app">
@@ -296,7 +289,9 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                     <label key={p.id} className="opt" aria-disabled={tooSoon}>
                       <input type="radio" name="plan" value={p.id} checked={order.planId === p.id} disabled={tooSoon} onChange={() => set({ planId: p.id })} />
                       <b>{p.name}</b>
-                      <span className="price">{formatZar(p.priceZar)}</span>
+                      <span className="price">
+                        <Price planId={p.id} />
+                      </span>
                       <small>{tooSoon ? "Not enough time to print before the party" : `Up to ${p.tracks} friends${p.printed ? ", printed box" : ""}`}</small>
                     </label>
                   );
@@ -314,7 +309,7 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                       setErrors(({ plan: _p, ...rest }) => rest);
                     }}
                   >
-                    Switch to Digital ({formatZar(planById("digital").priceZar)})
+                    Switch to Digital (<Price planId="digital" />)
                   </Button>
                 </div>
               )}
@@ -334,22 +329,37 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
 
           {step === 3 && (
             <>
-              <h2>{payStepTitle}</h2>
-              {!live && <p className="demo-note">Demo store: no payment is taken and no card details are asked for. The real checkout hands over to Paystack's own secure page.</p>}
-              {live && checkoutOpen === false && (
+              {live ? (
                 <>
-                  <p className="muted">Online payment opens soon. Send this request and we'll email you within one working day with how to pay (card link or EFT). Your share link follows as soon as it's paid.</p>
+                  <p className="soon label">Coming soon</p>
+                  <h2>Online ordering opens soon</h2>
+                  <p className="muted">
+                    Join the waitlist with these details and our team will email you within one working day to set up {order.honoree || "your"}
+                    {order.honoree ? "'s" : ""} tape. Nothing is charged now.
+                  </p>
                   <Field id="note" multiline label="Anything we should know? (optional)" value={note} limit={LIMITS.note} onChange={(e) => setNote(e.target.value)} />
                 </>
+              ) : (
+                <>
+                  <h2>{payStepTitle}</h2>
+                  <p className="demo-note">Demo store: no payment is taken and no card details are asked for. The real checkout hands over to Paystack's own secure page.</p>
+                </>
               )}
-              {live && checkoutOpen && <p className="muted">You'll pay on Paystack's secure page. We never see your card details.</p>}
               <dl className="paysum">
                 <div>
                   <dt>
                     {plan.name} tape in {ink.name}
                   </dt>
-                  <dd>{formatZar(plan.priceZar)}</dd>
+                  <dd>
+                    <Price planId={plan.id} />
+                  </dd>
                 </div>
+                {price.was !== null && (
+                  <div>
+                    <dt>{price.label || "Sale"}</dt>
+                    <dd>-{formatZar(price.was - price.now)}</dd>
+                  </div>
+                )}
                 {printed && (
                   <div>
                     <dt>Delivery</dt>
@@ -357,8 +367,8 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                   </div>
                 )}
                 <div className="paysum__total">
-                  <dt>Total</dt>
-                  <dd>{formatZar(plan.priceZar)}</dd>
+                  <dt>{live ? "Price today" : "Total"}</dt>
+                  <dd>{formatZar(price.now)}</dd>
                 </div>
               </dl>
               {payError && (
@@ -366,16 +376,8 @@ export function StartPage({ live = false, initialPlan = "boxed" }: { live?: bool
                   {payError}
                 </p>
               )}
-              <Button onClick={pay} disabled={busy || checkoutOpen === null}>
-                {busy
-                  ? live && !checkoutOpen
-                    ? "Sending..."
-                    : "Opening payment..."
-                  : !live
-                    ? `Pay ${formatZar(plan.priceZar)} with Paystack (demo)`
-                    : checkoutOpen
-                      ? `Pay ${formatZar(plan.priceZar)} with Paystack`
-                      : "Send request"}
+              <Button onClick={pay} disabled={busy}>
+                {live ? (busy ? "Sending..." : "Join the waitlist") : busy ? "Opening payment..." : `Pay ${formatZar(price.now)} with Paystack (demo)`}
               </Button>
             </>
           )}
@@ -423,7 +425,9 @@ function Summary({ order }: { order: Order }) {
         <p className="muted small">
           For {order.honoree || "..."}, who {order.occasion}
         </p>
-        <p className="summary__price">{formatZar(plan.priceZar)}</p>
+        <p className="summary__price">
+          <Price planId={plan.id} />
+        </p>
       </div>
     </div>
   );

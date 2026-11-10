@@ -3,6 +3,8 @@ import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { atNoon, fmtDate, fmtDateTime, formatZar, inkById, inks, LIMITS, nextRun, planById, plans, timeline } from "@yir/shared";
 import { api, ApiError, type ApiTape, type ApiTrack } from "../lib/api";
+import { priceInfo, usePricing } from "../lib/pricing";
+import { AdminPricing } from "../components/AdminPricing";
 import "./flow.css";
 import "../components/Field.css";
 import "./AdminPage.css";
@@ -48,7 +50,7 @@ interface OrganiserRow {
   last_seen: string | null;
 }
 
-type Tab = "tapes" | "requests" | "add" | "organisers";
+type Tab = "tapes" | "requests" | "add" | "organisers" | "pricing";
 const STAGES = ["awaiting_payment", "collecting", "curating", "approved", "printing", "shipped", "delivered", "cancelled"] as const;
 const STAGE_LABEL: Record<string, string> = {
   awaiting_payment: "Awaiting payment",
@@ -93,6 +95,7 @@ export function AdminPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [prefill, setPrefill] = useState<Enquiry | null>(null);
   const [notice, setNotice] = useState("");
+  usePricing(); // load today's prices early, for the add-organiser form
 
   const loadTapes = useCallback(() => api<AdminTape[]>("/api/admin/tapes").then(setTapes), []);
   const loadEnquiries = useCallback(() => api<Enquiry[]>("/api/admin/enquiries").then(setEnquiries), []);
@@ -162,6 +165,7 @@ export function AdminPage() {
             ["requests", "Requests"],
             ["add", "Add organiser"],
             ["organisers", "Organisers"],
+            ["pricing", "Pricing"],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} onClick={() => setTab(id)}>
@@ -210,6 +214,7 @@ export function AdminPage() {
         />
       )}
       {tab === "organisers" && <OrganisersTab notify={setNotice} />}
+      {tab === "pricing" && <AdminPricing notify={setNotice} />}
     </div>
   );
 }
@@ -507,6 +512,11 @@ function RequestsTab({ enquiries, onSetUp, onHandled }: { enquiries: Enquiry[]; 
 }
 
 function AddOrganiser({ prefill, onCreated }: { prefill: Enquiry | null; onCreated: (msg: string) => void }) {
+  const prices = usePricing();
+  const planPrice = (id: string) => {
+    const pr = priceInfo(prices, id);
+    return pr.was === null ? formatZar(pr.now) : `${formatZar(pr.now)} on sale, usually ${formatZar(pr.was)}`;
+  };
   const [f, setF] = useState(() => ({
     name: prefill?.name ?? "",
     email: prefill?.email ?? "",
@@ -519,7 +529,7 @@ function AddOrganiser({ prefill, onCreated }: { prefill: Enquiry | null; onCreat
     inkId: prefill?.ink_id ?? inks[0].id,
     invited: String(prefill?.invited ?? 20),
     paymentStatus: "paid" as "paid" | "comped",
-    amountZar: String(planById(prefill?.plan_id ?? "boxed").priceZar),
+    amountZar: String(priceInfo(prices, prefill?.plan_id ?? "boxed").now),
     note: "",
     sendLink: true,
     allowShortNotice: false,
@@ -588,10 +598,10 @@ function AddOrganiser({ prefill, onCreated }: { prefill: Enquiry | null; onCreat
       <div className="grid-2">
         <div className="field">
           <label htmlFor="a-plan">Plan</label>
-          <select id="a-plan" value={f.planId} onChange={(e) => set({ planId: e.target.value, amountZar: String(planById(e.target.value).priceZar) })}>
+          <select id="a-plan" value={f.planId} onChange={(e) => set({ planId: e.target.value, amountZar: String(priceInfo(prices, e.target.value).now) })}>
             {plans.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} ({formatZar(p.priceZar)})
+                {p.name} ({planPrice(p.id)})
               </option>
             ))}
           </select>

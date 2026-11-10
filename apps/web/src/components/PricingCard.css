@@ -68,3 +68,39 @@
 .plan .btn {
   width: 100%;
 }
+
+/* sale: the standard price struck through beside today's price, with the sale's name and end date */
+.plan__sale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 400 12px var(--font-mono);
+}
+.plan__sale-pill {
+  padding: 5px 9px;
+  background: var(--pop);
+  color: var(--on-pop);
+}
+.plan__sale-ends {
+  color: var(--text-muted);
+}
+.plan__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 4px;
+}
+.plan__was {
+  font: 700 20px/1 var(--font-display);
+  color: var(--text-muted);
+  text-decoration-thickness: 2px;
+  margin-right: 8px;
+}
+.price__was {
+  font-size: 0.6em;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration-thickness: 2px;
+}

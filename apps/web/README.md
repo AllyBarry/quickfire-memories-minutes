@@ -18,12 +18,12 @@ npm run build:single   # dist-single/index.html, one self-contained file (the de
 | Path | Who | Page |
 | --- | --- | --- |
 | `/` | Buyers | Sales page: hero, how it works, playable sample tape, printed pieces, ink picker and pricing, FAQ |
-| `/start` | Buyers | Checkout: who it's for (with birth year), party date and plan together (with a one-click switch to Digital when the date is too soon to print), inks, details, then Paystack, or a "reserve a tape" request while checkout is off |
+| `/start` | Buyers | Checkout: who it's for (with birth year), party date and plan together (with a one-click switch to Digital when the date is too soon to print), inks, details, then a "Coming soon" waitlist sign-up, emailed to the site administrator and listed under Requests in the admin. The demo (`/demo/start`) still simulates payment. |
 | `/<slug>` | Friends, then guests | The share link: the song-pick form while open, then the finished tape once approved |
 | `/<slug>/edit/<id>#<token>` | One friend | Change or delete their own song |
 | `/organiser` | Organisers | Magic-link sign-in, then their tapes |
 | `/organiser/<id>`, `/order`, `/tape` | Organisers | Dashboard, running order, and a preview of the tape and printed pieces |
-| `/admin` | Staff | Tapes (with the print queue), requests, add organiser, organisers. Behind Cloudflare Access. |
+| `/admin` | Staff | Tapes (with the print queue), requests, add organiser, organisers, pricing (standard prices and sales, shown on the home page and at checkout). Behind Cloudflare Access. |
 | `/demo/start`, `/pick`, `/organiser`, `/order`, `/tape` | Developers, demo file | The same flow on sample data kept in this browser. "Reset demo" on the dashboard starts over. Only in `npm run dev` and `npm run build:single`: the production build that Pages deploys has no demo routes or links ([src/lib/flags.ts](src/lib/flags.ts)). |
 
 Routing is by path ([src/lib/router.ts](src/lib/router.ts)), so share links and QR links are plain URLs and Access can protect `/admin`.
